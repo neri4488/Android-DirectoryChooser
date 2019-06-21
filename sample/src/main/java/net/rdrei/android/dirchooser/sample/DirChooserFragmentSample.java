@@ -2,7 +2,6 @@ package net.rdrei.android.dirchooser.sample;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
