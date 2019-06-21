@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        mavenCentral()
+        //mavenCentral()
         jcenter()
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots/'
@@ -15,7 +15,8 @@ buildscript {
 
 subprojects {
     repositories {
-        mavenCentral()
+        //mavenCentral()
+        jcenter()
         maven {
             url 'https://jitpack.io/'
         }
@@ -25,4 +26,5 @@ subprojects {
 
 repositories {
     google()
+    jcenter()
 }

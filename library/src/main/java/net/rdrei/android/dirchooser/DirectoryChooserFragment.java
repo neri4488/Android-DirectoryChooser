@@ -12,8 +12,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileObserver;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -145,67 +145,38 @@ public class DirectoryChooserFragment extends DialogFragment {
         assert getActivity() != null;
         final View view = inflater.inflate(R.layout.directory_chooser, container, false);
 
-        mBtnConfirm = (Button) view.findViewById(R.id.btnConfirm);
-        mBtnCancel = (Button) view.findViewById(R.id.btnCancel);
-        mBtnNavUp = (ImageButton) view.findViewById(R.id.btnNavUp);
-        mBtnCreateFolder = (ImageButton) view.findViewById(R.id.btnCreateFolder);
-        mTxtvSelectedFolder = (TextView) view.findViewById(R.id.txtvSelectedFolder);
-        mListDirectories = (ListView) view.findViewById(R.id.directoryList);
+        mBtnConfirm = view.findViewById(R.id.btnConfirm);
+        mBtnCancel = view.findViewById(R.id.btnCancel);
+        mBtnNavUp = view.findViewById(R.id.btnNavUp);
+        mBtnCreateFolder = view.findViewById(R.id.btnCreateFolder);
+        mTxtvSelectedFolder = view.findViewById(R.id.txtvSelectedFolder);
+        mListDirectories = view.findViewById(R.id.directoryList);
 
-        mBtnConfirm.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(final View v) {
-                if (isValidFile(mSelectedDir)) {
-                    returnSelectedFolder();
-                }
+        mBtnConfirm.setOnClickListener(v -> {
+            if (isValidFile(mSelectedDir)) {
+                returnSelectedFolder();
             }
         });
 
-        mBtnCancel.setOnClickListener(new OnClickListener() {
+        mBtnCancel.setOnClickListener(v -> mListener.foreach(OnFragmentInteractionListener::onCancelChooser));
 
-            @Override
-            public void onClick(final View v) {
-                mListener.foreach(new UnitFunction<OnFragmentInteractionListener>() {
-                    @Override
-                    public void apply(final OnFragmentInteractionListener listener) {
-                        listener.onCancelChooser();
-                    }
-                });
+        mListDirectories.setOnItemClickListener((parent, view1, position, id) -> {
+            debug("Selected index: %d", position);
+            if (mFilesInDir != null && position >= 0
+                    && position < mFilesInDir.length) {
+                changeDirectory(mFilesInDir[position]);
             }
         });
 
-        mListDirectories.setOnItemClickListener(new OnItemClickListener() {
-
-            @Override
-            public void onItemClick(final AdapterView<?> parent, final View view,
-                    final int position, final long id) {
-                debug("Selected index: %d", position);
-                if (mFilesInDir != null && position >= 0
-                        && position < mFilesInDir.length) {
-                    changeDirectory(mFilesInDir[position]);
-                }
+        mBtnNavUp.setOnClickListener(v -> {
+            final File parent;
+            if (mSelectedDir != null
+                    && (parent = mSelectedDir.getParentFile()) != null) {
+                changeDirectory(parent);
             }
         });
 
-        mBtnNavUp.setOnClickListener(new OnClickListener() {
-
-            @Override
-            public void onClick(final View v) {
-                final File parent;
-                if (mSelectedDir != null
-                        && (parent = mSelectedDir.getParentFile()) != null) {
-                    changeDirectory(parent);
-                }
-            }
-        });
-
-        mBtnCreateFolder.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                openNewFolderDialog();
-            }
-        });
+        mBtnCreateFolder.setOnClickListener(v -> openNewFolderDialog());
 
         if (!getShowsDialog()) {
             mBtnCreateFolder.setVisibility(View.GONE);
@@ -323,8 +294,8 @@ public class DirectoryChooserFragment extends DialogFragment {
         @SuppressLint("InflateParams")
         final View dialogView = getActivity().getLayoutInflater().inflate(
                 R.layout.dialog_new_folder, null);
-        final TextView msgView = (TextView) dialogView.findViewById(R.id.msgText);
-        final EditText editText = (EditText) dialogView.findViewById(R.id.editText);
+        final TextView msgView = dialogView.findViewById(R.id.msgText);
+        final EditText editText = dialogView.findViewById(R.id.editText);
         editText.setText(mNewDirectoryName);
         msgView.setText(getString(R.string.create_folder_msg, mNewDirectoryName));
 
@@ -332,23 +303,13 @@ public class DirectoryChooserFragment extends DialogFragment {
                 .setTitle(R.string.create_folder_label)
                 .setView(dialogView)
                 .setNegativeButton(R.string.cancel_label,
-                        new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(final DialogInterface dialog, final int which) {
-                                dialog.dismiss();
-                            }
-                        })
+                        (dialog, which) -> dialog.dismiss())
                 .setPositiveButton(R.string.confirm_label,
-                        new DialogInterface.OnClickListener() {
-
-                            @Override
-                            public void onClick(final DialogInterface dialog, final int which) {
-                                dialog.dismiss();
-                                mNewDirectoryName = editText.getText().toString();
-                                final int msg = createFolder();
-                                Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-                            }
+                        (dialog, which) -> {
+                            dialog.dismiss();
+                            mNewDirectoryName = editText.getText().toString();
+                            final int msg = createFolder();
+                            Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
                         })
                 .show();
 
@@ -460,12 +421,7 @@ public class DirectoryChooserFragment extends DialogFragment {
                 final Activity activity = getActivity();
 
                 if (activity != null) {
-                    activity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            refreshDirectory();
-                        }
-                    });
+                    activity.runOnUiThread(() -> refreshDirectory());
                 }
             }
         };
@@ -478,19 +434,9 @@ public class DirectoryChooserFragment extends DialogFragment {
     private void returnSelectedFolder() {
         if (mSelectedDir != null) {
             debug("Returning %s as result", mSelectedDir.getAbsolutePath());
-            mListener.foreach(new UnitFunction<OnFragmentInteractionListener>() {
-                @Override
-                public void apply(final OnFragmentInteractionListener f) {
-                    f.onSelectDirectory(mSelectedDir.getAbsolutePath());
-                }
-            });
+            mListener.foreach(f -> f.onSelectDirectory(mSelectedDir.getAbsolutePath()));
         } else {
-            mListener.foreach(new UnitFunction<OnFragmentInteractionListener>() {
-                @Override
-                public void apply(final OnFragmentInteractionListener f) {
-                    f.onCancelChooser();
-                }
-            });
+            mListener.foreach(OnFragmentInteractionListener::onCancelChooser);
         }
 
     }
